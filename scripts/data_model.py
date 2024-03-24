@@ -8,4 +8,6 @@ class FoodRecipe(BaseModel):
     cook_time_minutes: int = Field(..., description="Cooking time in minutes")
     cuisine: str = Field(None, description="Cuisine of the recipe")
     is_vegan: bool = Field(..., description="Is the recipe vegan?")
-    tags: List[str] = Field([], description="Tags related to the recipe for easy searching")
+
+class FoodRecipes(BaseModel):
+    recipes: List[FoodRecipe]
