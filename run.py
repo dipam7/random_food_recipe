@@ -1,18 +1,30 @@
-import argparse, os
+import argparse
 from pprint import pprint
-from scripts.utils import get_youtube_transcript, setup_openai_client, call_openai_client
-from dotenv import load_dotenv
+from scripts.openai_client import OpenaiClient
+from scripts.youtube_client import YouTubeClient
+from scripts.data_model import FoodRecipes
+
+def infer(playlist_url):
+    oai_client = OpenaiClient()
+    oai_client.setup_chat_client(model="gpt-3.5-turbo", response_model=FoodRecipes)
+
+    yt_client = YouTubeClient()
+    video_ids = yt_client.get_video_ids(args.playlist_url)
+    transcripts = yt_client.get_transcripts(video_ids)
+
+    for transcript in transcripts:
+        messages = [
+            {"role": "user", "content": f"Extract recipes from this transcript {transcript}"}
+        ]
+        recipes = oai_client.call_chat_client(messages).model_dump()['recipes']
+        for recipe in recipes:
+            pprint(recipe)
+        break
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-v", "--video_url", type=str, help="URL of the YouTube video")
+    parser.add_argument("-p", "--playlist_url", type=str, help="URL of the YouTube playlist")
     args = parser.parse_args()
 
-    load_dotenv(override=True)
-    api_key = os.environ['OPENAI_API_KEY']
-    
-    transcript = get_youtube_transcript(args.video_url)
-    chat_client = setup_openai_client(api_key)
-    recipes = call_openai_client(chat_client, transcript)
-    for recipe in recipes:
-        pprint(recipe)
+    infer(args.playlist_url)
